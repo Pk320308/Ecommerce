@@ -17,9 +17,7 @@ const Footer: React.FC = () => {
               <a href="https://github.com/Pk320308" className="text-gray-400 hover:text-blue-400 transition-colors">
                 <Github size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
-                <Twitter size={20} />
-              </a>
+           
               <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
                 <Instagram size={20} />
               </a>
