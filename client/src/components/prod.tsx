@@ -2,6 +2,7 @@ import  { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import API_BASE_URL from "../lib/api";
 
 type Product = {
   _id: string;
@@ -18,7 +19,7 @@ const Products = () => {
   // Get all products
   const getAllProducts = async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/v1/product/get-product");
+      const { data } = await axios.get(`${API_BASE_URL}/api/v1/product/get-product`);
       setProducts(data.products);
     } catch (error) {
       console.log(error);
@@ -42,7 +43,7 @@ const Products = () => {
             className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200"
           >
             <img
-              src={`http://localhost:8000/api/v1/product/product-photo/${p._id}`}
+              src={`${API_BASE_URL}/api/v1/product/product-photo/${p._id}`}
               alt={p.name}
               className="w-full h-48 object-cover"
             />

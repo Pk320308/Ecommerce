@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { Select } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-
+import API_BASE_URL from "../lib/api";
 const { Option } = Select;
 
 const UpdateProduct = () => {
@@ -24,12 +24,12 @@ const UpdateProduct = () => {
   const [shipping, setShipping] = useState("");
   const [photo, setPhoto] = useState<File | string>("");
   const [id, setId] = useState("");
-
+  
   // Fetch single product
   const getSingleProduct = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:8000/api/v1/product/get-product/${params.slug}`
+        `${API_BASE_URL}/api/v1/product/get-product/${params.slug}`
       );
       const product = data.product;
       
@@ -49,7 +49,7 @@ const UpdateProduct = () => {
   // Fetch all categories
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/v1/category/get-category");
+      const { data } = await axios.get(`${API_BASE_URL}/api/v1/category/get-category`);
       if (data?.success) {
         setCategories(data.category);
       }
@@ -78,7 +78,7 @@ const UpdateProduct = () => {
       productData.append("category", category);
 
       const { data } = await axios.put(
-        `http://localhost:8000/api/v1/product/update-product/${id}`,
+        `${API_BASE_URL}/api/v1/product/update-product/${id}`,
         productData
       );
 
@@ -146,7 +146,7 @@ const UpdateProduct = () => {
                     <img
                       src={
                         typeof photo === "string"
-                          ? `http://localhost:8000/api/v1/product/product-photo/${id}`
+                          ? `${API_BASE_URL}/api/v1/product/product-photo/${id}`
                           : URL.createObjectURL(photo)
                       }
                       alt="product_photo"

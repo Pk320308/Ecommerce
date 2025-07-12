@@ -3,6 +3,7 @@ import React, { useState, FormEvent } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import API_BASE_URL from "../lib/api";
 
 const ForgotPassword: React.FC = () => {
   const [phone, setPhone] = useState<string>("");
@@ -15,7 +16,7 @@ const ForgotPassword: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8000/api/v1/auth/forgot-password", {
+      const res = await axios.post(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
         phone,
         newPassword,
    
