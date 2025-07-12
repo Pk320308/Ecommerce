@@ -1,0 +1,35 @@
+# Root-level dependencies and logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+.env
+.env.local
+
+# OS & IDE junk
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+##########################
+# Frontend: React Client #
+##########################
+/client/node_modules/
+/client/build/
+/client/.env
+
+##########################
+# Backend: Node/Express  #
+##########################
+/backend/node_modules/
+/backend/.env
+/backend/dist/
+/backend/logs/
