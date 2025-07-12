@@ -1,5 +1,5 @@
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-let API_BASE_URL ;
+let API_BASE_URL ="/"
 // Auth API calls
 export const authAPI = {
  register: async ({
@@ -17,7 +17,7 @@ export const authAPI = {
   address: string;
   answer: string;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+  const response = await fetch(`/api/v1/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ export const authAPI = {
 },
 
   login: async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    const response = await fetch(`/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export const authAPI = {
   },
 
   forgotPassword: async (phone: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+    const response = await fetch(`/api/v1/auth/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export const authAPI = {
 // Product API calls
 export const productAPI = {
   getProducts: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/product/get-product`);
+    const response = await fetch(`/api/v1/product/get-product`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch products');
@@ -91,7 +91,7 @@ export const productAPI = {
   },
 
   getProduct: async (slug: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/product/get-product/${slug}`);
+    const response = await fetch(`/api/v1/product/get-product/${slug}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch product');
@@ -101,7 +101,7 @@ export const productAPI = {
   },
 
   createProduct: async (productData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/product/create-product`, {
+    const response = await fetch(`api/v1/product/create-product`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -118,7 +118,7 @@ export const productAPI = {
   },
 
   updateProduct: async (pid: string, productData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/product/update-product/${pid}`, {
+    const response = await fetch(`api/v1/product/update-product/${pid}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -135,7 +135,7 @@ export const productAPI = {
   },
 
   deleteProduct: async (pid: string, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/product/delete-product/${pid}`, {
+    const response = await fetch(`api/v1/product/delete-product/${pid}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -151,14 +151,14 @@ export const productAPI = {
   },
 
   getProductPhoto: (pid: string) => {
-    return `${API_BASE_URL}/api/v1/product/product-photo/${pid}`;
+    return `api/v1/product/product-photo/${pid}`;
   }
 };
 
 // Category API calls
 export const categoryAPI = {
   getCategories: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/category/get-category`);
+    const response = await fetch(`api/v1/category/get-category`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
@@ -168,7 +168,7 @@ export const categoryAPI = {
   },
 
   createCategory: async (categoryData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/category/create-category`, {
+    const response = await fetch(`api/v1/category/create-category`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -185,7 +185,7 @@ export const categoryAPI = {
   },
 
   updateCategory: async (id: string, categoryData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/category/update-category/${id}`, {
+    const response = await fetch(`api/v1/category/update-category/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -202,7 +202,7 @@ export const categoryAPI = {
   },
 
   deleteCategory: async (id: string, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/category/delete-category/${id}`, {
+    const response = await fetch(`api/v1/category/delete-category/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -221,7 +221,7 @@ export const categoryAPI = {
 // Payment API calls
 export const paymentAPI = {
   createRazorpayOrder: async (orderData: any, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/order/create-order`, {
+    const response = await fetch(`api/v1/order/create-order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
