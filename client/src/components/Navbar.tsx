@@ -21,9 +21,10 @@ const Navbar: React.FC = () => {
   };
 
   const handleLogout = () => {
+
     logout();
     setIsUserMenuOpen(false);
-    navigate('/');
+    navigate("/");
   };
 
   const isActive = (path: string) => location.pathname === path;

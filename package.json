@@ -9,7 +9,10 @@
   "scripts": {
     "client": "npm start --prefix client",
     "server": "nodemon backend/server.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm run build --prefix client",
+    "start": "node backend/server.js",
+    "test": "npm install && cd backend && npm install && cd .. && cd client && npm install && npm run build"
   },
   "keywords": [],
   "author": "",
