@@ -16,7 +16,7 @@ const ForgotPassword: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+      const res = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
         phone,
         newPassword,
    

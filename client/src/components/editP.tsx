@@ -29,7 +29,7 @@ const UpdateProduct = () => {
   const getSingleProduct = async () => {
     try {
       const { data } = await axios.get(
-        `${API_BASE_URL}/api/v1/product/get-product/${params.slug}`
+        `${API_BASE_URL}/product/get-product/${params.slug}`
       );
       const product = data.product;
       
@@ -49,7 +49,7 @@ const UpdateProduct = () => {
   // Fetch all categories
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/v1/category/get-category`);
+      const { data } = await axios.get(`${API_BASE_URL}/category/get-category`);
       if (data?.success) {
         setCategories(data.category);
       }
@@ -78,7 +78,7 @@ const UpdateProduct = () => {
       productData.append("category", category);
 
       const { data } = await axios.put(
-        `${API_BASE_URL}/api/v1/product/update-product/${id}`,
+        `${API_BASE_URL}/product/update-product/${id}`,
         productData
       );
 
@@ -146,7 +146,7 @@ const UpdateProduct = () => {
                     <img
                       src={
                         typeof photo === "string"
-                          ? `${API_BASE_URL}/api/v1/product/product-photo/${id}`
+                          ? `${API_BASE_URL}/product/product-photo/${id}`
                           : URL.createObjectURL(photo)
                       }
                       alt="product_photo"

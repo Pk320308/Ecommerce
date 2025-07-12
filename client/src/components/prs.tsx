@@ -26,7 +26,7 @@ const PRS = () => {
   //get all category
   const getAllCategory = async () => {
     try {
-  const { data } = await axios.get(`${API_BASE_URL}/api/v1/category/get-category`);
+  const { data } = await axios.get(`${API_BASE_URL}/category/get-category`);
   if (data?.success) {
     setCategories(data?.category);
   }
@@ -58,7 +58,7 @@ const handleCreate = async (e: React.FormEvent) => {
     productData.append("category", category);
 
     const { data } = await axios.post(
-      `${API_BASE_URL}/api/v1/product/create-product`,
+      `${API_BASE_URL}/product/create-product`,
       productData,
       {
         headers: {

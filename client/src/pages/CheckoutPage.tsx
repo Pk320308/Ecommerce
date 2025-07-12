@@ -48,7 +48,7 @@ const CheckoutPage: React.FC = () => {
 
   try {
     // Step 1: Create Razorpay Order on Backend
-    const orderRes = await fetch(`${API_BASE_URL}/api/v1/order/razorpay/orders`, {
+    const orderRes = await fetch(`${API_BASE_URL}/order/razorpay/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -71,7 +71,7 @@ const CheckoutPage: React.FC = () => {
       handler: async function (response: any) {
         try {
           // Step 3: Verify Payment on Backend
-          const verifyRes = await fetch(`${API_BASE_URL}/api/v1/order/razorpay/verify`, {
+          const verifyRes = await fetch(`${API_BASE_URL}/order/razorpay/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -95,7 +95,7 @@ const CheckoutPage: React.FC = () => {
             price: item.product.price
           }));
 
-          const createOrderRes = await fetch(`${API_BASE_URL}/api/v1/order/create-order`, {
+          const createOrderRes = await fetch(`${API_BASE_URL}/order/create-order`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
