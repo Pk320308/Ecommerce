@@ -1,6 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-// let API_BASE_URL ="/"
-export default API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 // Auth API calls
 export const authAPI = {
  register: async ({
@@ -18,7 +17,7 @@ export const authAPI = {
   address: string;
   answer: string;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +41,7 @@ export const authAPI = {
 },
 
   login: async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +61,7 @@ export const authAPI = {
   },
 
   forgotPassword: async (phone: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +81,7 @@ export const authAPI = {
 // Product API calls
 export const productAPI = {
   getProducts: async () => {
-    const response = await fetch(`${API_BASE_URL}/product/get-product`);
+    const response = await fetch(`${API_BASE_URL}/api/v1/product/get-product`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch products');
@@ -92,7 +91,7 @@ export const productAPI = {
   },
 
   getProduct: async (slug: string) => {
-    const response = await fetch(`${API_BASE_URL}/product/get-product/${slug}`);
+    const response = await fetch(`${API_BASE_URL}/api/v1/product/get-product/${slug}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch product');
@@ -102,7 +101,7 @@ export const productAPI = {
   },
 
   createProduct: async (productData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/product/create-product`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/product/create-product`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -118,25 +117,20 @@ export const productAPI = {
     return response.json();
   },
 
-  updateProduct: async (pid: string, productData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/product/update-product/${pid}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: productData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to update product');
-    }
-
-    return response.json();
-  },
+updateProduct: async (
+  id: string,
+  productData: FormData
+) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/product/update-product/${id}`, {
+    method: "PUT",
+    body: productData,
+  });
+  if (!res.ok) throw new Error("Failed to update product");
+  return res.json();
+},
 
   deleteProduct: async (pid: string, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/product/delete-product/${pid}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/product/delete-product/${pid}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -152,14 +146,14 @@ export const productAPI = {
   },
 
   getProductPhoto: (pid: string) => {
-    return `${API_BASE_URL}/product/product-photo/${pid}`;
+    return `${API_BASE_URL}/api/v1/product/product-photo/${pid}`;
   }
 };
 
 // Category API calls
 export const categoryAPI = {
   getCategories: async () => {
-    const response = await fetch(`${API_BASE_URL}/category/get-category`);
+    const response = await fetch(`${API_BASE_URL}/api/v1/category/get-category`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
@@ -169,7 +163,7 @@ export const categoryAPI = {
   },
 
   createCategory: async (categoryData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/category/create-category`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/category/create-category`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -186,7 +180,7 @@ export const categoryAPI = {
   },
 
   updateCategory: async (id: string, categoryData: FormData, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/category/update-category/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/category/update-category/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -203,7 +197,7 @@ export const categoryAPI = {
   },
 
   deleteCategory: async (id: string, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/category/delete-category/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/category/delete-category/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -222,7 +216,7 @@ export const categoryAPI = {
 // Payment API calls
 export const paymentAPI = {
   createRazorpayOrder: async (orderData: any, token: string) => {
-    const response = await fetch(`${API_BASE_URL}/order/create-order`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/order/create-order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -238,4 +232,142 @@ export const paymentAPI = {
 
     return response.json();
   }
+};
+
+
+// Create Razorpay Order
+export const createRazorpayOrder = async (amount: number) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/order/razorpay/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: amount * 100 }) // amount in paise
+  });
+
+  if (!res.ok) throw new Error('❌ Failed to create Razorpay order');
+  return res.json();
+};
+
+// Verify Razorpay Payment
+export const verifyRazorpayPayment = async (paymentData: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/order/razorpay/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(paymentData)
+  });
+
+  if (!res.ok) throw new Error('❌ Payment verification failed');
+  return res.json();
+};
+
+// Save paid order after Razorpay success
+export const savePaidOrder = async ({
+  total_amount,
+  shipping_address,
+  items,
+}: {
+  total_amount: number;
+  shipping_address: string;
+  items: { product_id: string; quantity: number; price: number }[];
+}) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/order/create-order`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+    body: JSON.stringify({
+      total_amount,
+      shipping_address,
+      items,
+      payment_status: 'Paid',
+    }),
+  });
+
+  if (!res.ok) throw new Error('❌ Order saving failed');
+  return res.json();
+};
+
+// Save Cash on Delivery order
+export const saveCODOrder = async ({
+  total_amount,
+  shipping_address,
+  items,
+}: {
+  total_amount: number;
+  shipping_address: string;
+  items: { product_id: string; quantity: number; price: number }[];
+}) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/order/create-order`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+    body: JSON.stringify({
+      total_amount,
+      shipping_address,
+      items,
+      payment_status: 'Pending',
+    }),
+  });
+
+  if (!res.ok) throw new Error('❌ COD order failed');
+  return res.json();
+};
+export const getAllCategories = async () => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/category/get-category`);
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+};
+
+// Create new product
+export const createProduct = async (
+  formData: FormData,
+  token: string
+) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/product/create-product`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error("Product creation failed");
+  return res.json();
+};
+export const getSingleProduct = async (slug: string) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/product/get-product/${slug}`);
+  if (!res.ok) throw new Error("Failed to fetch product");
+  return res.json();
+};
+
+// Get all categories
+export const getuAllCategories = async () => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/category/get-category`);
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+};
+
+// Update product
+export const updateProduct = async (
+  id: string,
+  productData: FormData
+) => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/product/update-product/${id}`, {
+    method: "PUT",
+    body: productData,
+  });
+  if (!res.ok) throw new Error("Failed to update product");
+  return res.json();
+};
+// ✅ Get all products
+export const getAllProducts = async () => {
+  const res = await fetch(`${API_BASE_URL}/api/v1/product/get-product`);
+  if (!res.ok) throw new Error("Failed to fetch products");
+  return res.json();
 };

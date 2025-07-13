@@ -1,34 +1,31 @@
-import  { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-import API_BASE_URL from "../lib/api";
+import { getAllProducts } from "../lib/api"; // ✅ import API
 
 type Product = {
   _id: string;
   name: string;
   slug: string;
   description: string;
-  _photo: string;
-  // add other fields if needed
+  // other optional fields
 };
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Get all products
-  const getAllProducts = async () => {
-    try {
-      const { data } = await axios.get(`${API_BASE_URL}/product/get-product`);
-      setProducts(data.products);
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
-    }
-  };
-
   useEffect(() => {
-    getAllProducts();
+    const fetchProducts = async () => {
+      try {
+        const data = await getAllProducts();
+        setProducts(data.products);
+      } catch (error) {
+        console.error(error);
+        toast.error("Something went wrong while fetching products");
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   return (
@@ -36,14 +33,14 @@ const Products = () => {
       <h1 className="text-3xl font-bold text-center mb-8">All Products</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products?.map((p) => (
+        {products.map((p) => (
           <Link
             key={p._id}
             to={`/admin/get-product/${p.slug}`}
             className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200"
           >
             <img
-              src={`${API_BASE_URL}/product/product-photo/${p._id}`}
+              src={`http://localhost:8000/api/v1/product/product-photo/${p._id}`}
               alt={p.name}
               className="w-full h-48 object-cover"
             />

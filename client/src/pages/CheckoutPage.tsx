@@ -3,21 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Lock, ArrowLeft } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useOrders } from '../hooks/useOrders';
 
-// Add Razorpay type declaration to window
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  savePaidOrder,
+  saveCODOrder
+} from '../lib/api';
+
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
-  const { createOrder } = useOrders();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -42,111 +44,93 @@ const CheckoutPage: React.FC = () => {
   const taxAmount = totalPrice * 0.08;
   const finalTotal = totalPrice + shippingCost + taxAmount;
 
- const handleRazorpayPayment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleRazorpayPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    // Step 1: Create Razorpay Order on Backend
-    const orderRes = await fetch(`${API_BASE_URL}/order/razorpay/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ amount: finalTotal * 100 }) // amount in paise
-    });
+    try {
+      const order = await createRazorpayOrder(finalTotal);
 
-    const order = await orderRes.json();
-
-    if (!order.id) {
-      throw new Error("Failed to create Razorpay order");
-    }
-
-    // Step 2: Prepare Razorpay Checkout Options
-    const options = {
-      key: "rzp_test_JlsDJSQno3uHI3", // 🔒 Replace with env var in production
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.id,
-      handler: async function (response: any) {
-        try {
-          // Step 3: Verify Payment on Backend
-          const verifyRes = await fetch(`${API_BASE_URL}/order/razorpay/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_JlsDJSQno3uHI3",
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        handler: async function (response: any) {
+          try {
+            const verifyData = await verifyRazorpayPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature
-            })
-          });
+            });
 
-          const verifyData = await verifyRes.json();
+            if (!verifyData.success) {
+              alert("❌ Payment verification failed");
+              return;
+            }
 
-          if (!verifyData.success) {
-            alert("❌ Payment verification failed");
-            return;
-          }
+            const orderItems = items.map(item => ({
+              product_id: item.product.id,
+              quantity: item.quantity,
+              price: item.product.price
+            }));
 
-          // Step 4: Save Order in DB
-          const orderItems = items.map(item => ({
-            product_id: item.product.id,
-            quantity: item.quantity,
-            price: item.product.price
-          }));
-
-          const createOrderRes = await fetch(`${API_BASE_URL}/order/create-order`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}` // optional if protected
-            },
-            body: JSON.stringify({
+            await savePaidOrder({
               total_amount: finalTotal,
               shipping_address: shippingAddress,
-              items: orderItems,
-              payment_status: "Paid"
-            })
-          });
+              items: orderItems
+            });
 
-          const createData = await createOrderRes.json();
-
-          if (!createData.success) {
-            alert("⚠️ Order saved failed");
-            return;
+            clearCart();
+            navigate("/orders", { state: { orderSuccess: true } });
+          } catch (err) {
+            console.error("❌ Order save error:", err);
+            alert("Something went wrong. Try again.");
           }
-
-          // ✅ All done!
-          clearCart();
-          navigate("/orders", { state: { orderSuccess: true } });
-        } catch (err) {
-          console.error("❌ Error during order creation:", err);
-          alert("Something went wrong. Try again.");
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email
+        },
+        notes: {
+          address: shippingAddress
+        },
+        theme: {
+          color: "#3b82f6"
         }
-      },
-      prefill: {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email
-      },
-      notes: {
-        address: shippingAddress
-      },
-      theme: {
-        color: "#3b82f6"
-      }
-    };
+      };
 
-    // Step 5: Open Razorpay Modal
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-  } catch (error) {
-    console.error("❌ Razorpay payment error:", error);
-    alert("Payment initiation failed. Try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("❌ Razorpay payment error:", error);
+      alert("Payment initiation failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleCODOrder = async () => {
+    try {
+      const orderItems = items.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price,
+      }));
+
+      await saveCODOrder({
+        total_amount: finalTotal,
+        shipping_address: shippingAddress,
+        items: orderItems,
+      });
+
+      clearCart();
+      navigate("/orders", { state: { orderSuccess: true } });
+    } catch (error) {
+      console.error(error);
+      alert("Order failed. Try again.");
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -175,10 +159,9 @@ const CheckoutPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form */}
+          {/* Checkout Form */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <form className="space-y-6" onSubmit={handleRazorpayPayment}>
-              {/* Contact Info */}
               <div>
                 <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
                 <input
@@ -192,7 +175,6 @@ const CheckoutPage: React.FC = () => {
                 />
               </div>
 
-              {/* Shipping Info */}
               <div>
                 <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -205,9 +187,14 @@ const CheckoutPage: React.FC = () => {
                 </div>
               </div>
 
-            
+              <button
+                type="button"
+                onClick={handleCODOrder}
+                className="w-full mt-4 bg-gray-800 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900"
+              >
+                Place Order with Cash on Delivery
+              </button>
 
-              {/* Razorpay Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -219,7 +206,7 @@ const CheckoutPage: React.FC = () => {
             </form>
           </div>
 
-          {/* Summary */}
+          {/* Order Summary */}
           <div className="bg-white rounded-lg shadow-lg p-6 h-fit sticky top-20">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
             <div className="space-y-4 mb-6">
@@ -266,4 +253,3 @@ const CheckoutPage: React.FC = () => {
 };
 
 export default CheckoutPage;
-

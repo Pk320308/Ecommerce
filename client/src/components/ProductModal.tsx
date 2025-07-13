@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Upload } from 'lucide-react';
 import { Product, Category } from '../types';
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onSave: (productData: FormData, productId?: string) => Promise<void>;
   product?: Product | null;
   categories: Category[];
 }
@@ -20,78 +20,55 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: 0,
-    image_url: '',
-    category_id: '',
-    stock: 0,
-    featured: false
+    price: '',
+    category: '',
+    stock: '',
+    featured: '0',
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const [photo, setPhoto] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (product) {
       setFormData({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        image_url: product.image_url,
-        category_id: product.category_id || '',
-        stock: product.stock,
-        featured: product.featured
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price.toString() || '',
+        category: product.category?._id || '',
+        stock: product.stock.toString() || '',
+        featured: product.featured ? '1' : '0',
       });
-      setImagePreview(product.image_url);
+      setImagePreview(`/api/v1/product/product-photo/${product._id}`);
     } else {
       setFormData({
         name: '',
         description: '',
-        price: 0,
-        image_url: '',
-        category_id: '',
-        stock: 0,
-        featured: false
+        price: '',
+        category: '',
+        stock: '',
+        featured: '0',
       });
       setImagePreview('');
     }
-    setImageFile(null);
+    setPhoto(null);
   }, [product]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // If we have an image file, use it; otherwise use the URL
-      const productData = {
-        ...formData,
-        category_id: formData.category_id || null,
-        image_url: imageFile ? URL.createObjectURL(imageFile) : formData.image_url
-      };
-
-      await onSave(productData);
-      onClose();
-    } catch (error) {
-      console.error('Error saving product:', error);
-      alert('Failed to save product');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
-              type === 'number' ? Number(value) : value
+      [name]: value,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setPhoto(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -100,11 +77,33 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
-  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setFormData(prev => ({ ...prev, image_url: url }));
-    setImagePreview(url);
-    setImageFile(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+      const token = auth?.token;
+
+      const fd = new FormData();
+      fd.append('name', formData.name);
+      fd.append('description', formData.description);
+      fd.append('price', formData.price);
+      fd.append('category', formData.category);
+      fd.append('stock', formData.stock);
+      fd.append('featured', formData.featured);
+      if (photo) {
+        fd.append('photo', photo);
+      }
+
+      await onSave(fd, product?._id);
+      onClose();
+    } catch (err) {
+      console.error('Error saving product:', err);
+      alert('Failed to save product');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -126,150 +125,114 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              required
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price ($)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
             <input
               type="number"
               name="price"
               value={formData.price}
               onChange={handleInputChange}
               required
-              min="0"
-              step="0.01"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product Image
-            </label>
-            
-            {/* Image Preview */}
-            {imagePreview && (
-              <div className="mb-3">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-32 object-cover rounded-lg border"
-                />
-              </div>
-            )}
-
-            {/* File Upload */}
-            <div className="mb-3">
-              <label className="flex items-center justify-center w-full h-12 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
-                <Upload size={20} className="mr-2 text-gray-500" />
-                <span className="text-gray-500">Upload Image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {/* Or URL Input */}
-            <div className="text-center text-sm text-gray-500 mb-2">OR</div>
-            <input
-              type="url"
-              name="image_url"
-              value={formData.image_url}
-              onChange={handleImageUrlChange}
-              placeholder="Enter image URL"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             <select
-              name="category_id"
-              value={formData.category_id}
+              name="category"
+              value={formData.category}
               onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              className="w-full border rounded-lg px-3 py-2"
             >
-              <option value="">No Category</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
+              <option value="">Select category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock Quantity
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
             <input
               type="number"
               name="stock"
               value={formData.stock}
               onChange={handleInputChange}
               required
-              min="0"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Featured</label>
+            <select
               name="featured"
-              checked={formData.featured}
+              value={formData.featured}
               onChange={handleInputChange}
-              className="mr-2"
-            />
-            <label className="text-sm font-medium text-gray-700">
-              Featured Product
-            </label>
+              required
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
           </div>
 
-          <div className="flex space-x-4 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full"
+            />
+            {imagePreview && (
+              <div className="mt-2">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-32 object-cover rounded"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-4 pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
             >
-              {loading ? 'Saving...' : 'Save Product'}
+              {loading ? 'Saving...' : 'Save'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
             >
               Cancel
             </button>
